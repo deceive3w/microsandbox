@@ -49,7 +49,7 @@ pub fn create_router(state: AppState) -> Router {
     // Authentication is handled by the Workers layer before proxying
     let ws_api = Router::new()
         .route(
-            "/terminal/:namespace/:sandbox",
+            "/terminal/{namespace}/{sandbox}",
             get(ws_proxy::terminal_ws_proxy),
         );
 
