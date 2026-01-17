@@ -427,13 +427,19 @@ where
         let current_mode = metadata.permissions().mode();
         let current_permission_bits = current_mode & 0o7777; // Extract only permission bits
 
+        // Use the ORIGINAL permission bits from the tar header, not current file permissions
+        // This preserves execute bits for binaries
+        let tar_permission_bits = permission_bits & 0o7777;
+
         // Calculate the final desired permissions
+        // Start with tar permissions, then ensure minimum access for current user
         let desired_permission_bits = if is_dir {
-            // For directories, ensure at least u+rwx (0o700)
-            current_permission_bits | 0o700
+            // For directories, use tar permissions OR at least u+rwx (0o700)
+            tar_permission_bits | 0o700
         } else {
-            // For files, ensure at least u+rw (0o600)
-            current_permission_bits | 0o600
+            // For files, use tar permissions OR at least u+rw (0o600)
+            // This preserves execute bits from tar while ensuring we can read/write
+            tar_permission_bits | 0o600
         };
 
         // If we need to modify permissions, do it once
@@ -482,7 +488,11 @@ where
 
                 let current_mode = metadata.permissions().mode();
                 let current_permission_bits = current_mode & 0o7777; // Extract only permission bits
-                let desired_permission_bits = current_permission_bits | 0o600; // Ensure at least u+rw
+
+                // Use the ORIGINAL permission bits from the tar header, not current file permissions
+                // This preserves execute bits for binaries
+                let tar_permission_bits = link_info.mode & 0o7777;
+                let desired_permission_bits = tar_permission_bits | 0o600; // Use tar permissions, ensure at least u+rw
 
                 // Set permissions if needed
                 if current_permission_bits != desired_permission_bits {
