@@ -56,6 +56,11 @@ const STOP_SANDBOXES_MSG: &str = "Stopping sandboxes";
 static DISK_SIZE_CACHE: Lazy<RwLock<HashMap<String, (u64, Instant)>>> =
     Lazy::new(|| RwLock::new(HashMap::new()));
 
+/// Global cache pid -> Process for accurate CPU measurements.
+/// psutil's cpu_percent() returns meaningful values only on subsequent calls after the first.
+static CPU_PROCESS_CACHE: Lazy<RwLock<HashMap<u32, psutil::process::Process>>> =
+    Lazy::new(|| RwLock::new(HashMap::new()));
+
 //--------------------------------------------------------------------------------------------------
 // Types
 //--------------------------------------------------------------------------------------------------
@@ -575,6 +580,12 @@ pub async fn down(
             && config_sandboxes.contains_key(&sandbox.name)
         {
             tracing::info!("stopping sandbox: {}", sandbox.name);
+
+            // Clean up CPU process cache for this sandbox's microVM PID
+            if let Ok(mut cache) = CPU_PROCESS_CACHE.write() {
+                cache.remove(&sandbox.microvm_pid);
+            }
+
             if let Err(e) = signal::kill(
                 Pid::from_raw(sandbox.supervisor_pid as i32),
                 Signal::SIGTERM,
@@ -716,14 +727,42 @@ pub async fn status(
                 sandbox_status.microvm_pid = Some(sandbox.microvm_pid);
                 sandbox_status.rootfs_paths = Some(sandbox.rootfs_paths.clone());
 
-                // Get CPU and memory usage for the microVM process
-                if let Ok(mut process) = psutil::process::Process::new(sandbox.microvm_pid) {
-                    // CPU usage
-                    if let Ok(cpu_percent) = process.cpu_percent() {
-                        sandbox_status.cpu_usage = Some(cpu_percent);
+                // Get CPU and memory usage for the microVM process.
+                // Use cached Process for accurate CPU measurements - psutil's cpu_percent()
+                // returns meaningful values only on subsequent calls after the first.
+                let pid = sandbox.microvm_pid;
+                let cpu_percent = {
+                    let mut cache = CPU_PROCESS_CACHE.write().unwrap();
+                    let mut result = None;
+
+                    if let Some(process) = cache.get_mut(&pid) {
+                        // Use cached process for accurate CPU measurement
+                        match process.cpu_percent() {
+                            Ok(cpu) => result = Some(cpu),
+                            Err(_) => {
+                                // Process may have died and PID reused, remove stale entry
+                                cache.remove(&pid);
+                            }
+                        }
                     }
 
-                    // Memory usage
+                    // If no cached result (either not in cache or stale), create fresh process
+                    if result.is_none() && !cache.contains_key(&pid) {
+                        if let Ok(mut process) = psutil::process::Process::new(pid) {
+                            // First call establishes baseline (may return 0 or average since start)
+                            result = process.cpu_percent().ok();
+                            cache.insert(pid, process);
+                        }
+                    }
+
+                    result
+                };
+                if let Some(cpu) = cpu_percent {
+                    sandbox_status.cpu_usage = Some(cpu);
+                }
+
+                // Memory usage - create fresh process (doesn't need caching)
+                if let Ok(process) = psutil::process::Process::new(pid) {
                     if let Ok(memory_info) = process.memory_info() {
                         // Convert bytes to MiB
                         sandbox_status.memory_usage = Some(memory_info.rss() / (1024 * 1024));
