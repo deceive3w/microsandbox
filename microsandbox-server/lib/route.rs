@@ -15,7 +15,7 @@ use axum::{
     routing::{get, post},
 };
 
-use crate::{handler, middleware as app_middleware, state::AppState};
+use crate::{handler, middleware as app_middleware, state::AppState, ws_proxy};
 
 //--------------------------------------------------------------------------------------------------
 // Functions
@@ -45,11 +45,20 @@ pub fn create_router(state: AppState) -> Router {
                 app_middleware::mcp_smart_auth_middleware,
             ));
 
+    // Create WebSocket routes for terminal proxy
+    // Authentication is handled by the Workers layer before proxying
+    let ws_api = Router::new()
+        .route(
+            "/terminal/:namespace/:sandbox",
+            get(ws_proxy::terminal_ws_proxy),
+        );
+
     // Combine all routes with logging middleware
     Router::new()
         .nest("/api/v1", rest_api)
         .nest("/api/v1/rpc", rpc_api)
         .nest("/mcp", mcp_api)
+        .nest("/ws", ws_api)
         .layer(middleware::from_fn(app_middleware::logging_middleware))
         .with_state(state)
 }

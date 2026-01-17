@@ -6,6 +6,7 @@ members = [
     "microsandbox-core",
     "microsandbox-portal",
     "microsandbox-server",
+    "microsandbox-terminal",
     "microsandbox-utils",
 ]
 
@@ -47,6 +48,7 @@ jsonwebtoken = "9.3"
 libc = "0.2"
 microsandbox-core = { version = "0.2.6", path = "./microsandbox-core" }
 microsandbox-server = { version = "0.2.6", path = "./microsandbox-server" }
+microsandbox-terminal = { version = "0.2.6", path = "./microsandbox-terminal" }
 microsandbox-utils = { version = "0.2.6", path = "./microsandbox-utils" }
 multihash = "0.19"
 multihash-codetable = "0.1"
@@ -85,7 +87,7 @@ tower = { version = "0.5" }
 tower-http = { version = "0.6.2", features = ["cors"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
-typed-builder = "0.23"
+typed-builder = "0.20"
 typed-path = "0.12"
 uuid = { version = "1.11", features = ["v4"] }
 uzers = "0.12"

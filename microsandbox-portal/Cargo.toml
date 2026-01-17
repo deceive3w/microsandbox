@@ -17,8 +17,11 @@ path = "bin/portal.rs"
 [dependencies]
 anyhow = { workspace = true }
 async-trait.workspace = true
-axum = { workspace = true, features = ["macros"] }
+axum = { workspace = true, features = ["macros", "ws"] }
+base64.workspace = true
 clap = { workspace = true }
+futures.workspace = true
+microsandbox-terminal = { workspace = true }
 microsandbox-utils = { workspace = true }
 rand.workspace = true
 reqwest = { workspace = true, features = ["json"], optional = true }

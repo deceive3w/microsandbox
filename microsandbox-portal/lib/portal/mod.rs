@@ -77,3 +77,4 @@
 pub mod command;
 pub mod fs;
 pub mod repl;
+pub mod terminal;

@@ -228,13 +228,14 @@ where
 
                 tracing::info!("received SIGTERM signal");
 
-                if let Some(pid) = self.child_pid.take()
-                    && let Err(e) = nix::sys::signal::kill(Pid::from_raw(pid as i32), nix::sys::signal::Signal::SIGTERM) {
-                    tracing::error!(
-                        "failed to send SIGTERM to process {}: {}",
-                        pid,
-                        e
-                    );
+                if let Some(pid) = self.child_pid.take() {
+                    if let Err(e) = nix::sys::signal::kill(Pid::from_raw(pid as i32), nix::sys::signal::Signal::SIGTERM) {
+                        tracing::error!(
+                            "failed to send SIGTERM to process {}: {}",
+                            pid,
+                            e
+                        );
+                    }
                 }
 
                 // Wait for child to exit after sending signal
@@ -251,13 +252,14 @@ where
 
                 tracing::info!("received SIGINT signal");
 
-                if let Some(pid) = self.child_pid.take()
-                    && let Err(e) = nix::sys::signal::kill(Pid::from_raw(pid as i32), nix::sys::signal::Signal::SIGTERM) {
-                    tracing::error!(
-                        "failed to send SIGTERM to process {}: {}",
-                        pid,
-                        e
-                    );
+                if let Some(pid) = self.child_pid.take() {
+                    if let Err(e) = nix::sys::signal::kill(Pid::from_raw(pid as i32), nix::sys::signal::Signal::SIGTERM) {
+                        tracing::error!(
+                            "failed to send SIGTERM to process {}: {}",
+                            pid,
+                            e
+                        );
+                    }
                 }
 
                 // Wait for child to exit after sending signal

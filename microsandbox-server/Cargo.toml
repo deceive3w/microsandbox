@@ -12,9 +12,10 @@ path = "lib/lib.rs"
 
 [dependencies]
 anyhow.workspace = true
-axum = { workspace = true, features = ["macros"] }
+axum = { workspace = true, features = ["macros", "ws"] }
 base64.workspace = true
 chrono.workspace = true
+futures.workspace = true
 console = { workspace = true, optional = true }
 getset.workspace = true
 indicatif = { workspace = true, optional = true }
@@ -25,8 +26,10 @@ microsandbox-utils.workspace = true
 once_cell.workspace = true
 pretty-error-debug.workspace = true
 rand.workspace = true
+regex.workspace = true
 reqwest.workspace = true
 serde.workspace = true
+tokio-tungstenite = "0.28"
 serde_json.workspace = true
 serde_yaml.workspace = true
 thiserror.workspace = true

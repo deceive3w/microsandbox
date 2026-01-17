@@ -16,6 +16,7 @@ pub mod payload;
 pub mod port;
 pub mod route;
 pub mod state;
+pub mod ws_proxy;
 
 pub use config::*;
 pub use error::*;
@@ -26,3 +27,4 @@ pub use middleware::*;
 pub use payload::*;
 pub use route::*;
 pub use state::*;
+pub use ws_proxy::*;
